@@ -30,7 +30,7 @@ public:
   void print(const string& msg = "") const {
     if(msg.size() != 0) 
       out << msg << endl;
-    out << '\t' << name << ": "
+      out << '\t' << name << ": "
         << "objectCount = "
         << objectCount << endl;
   }
@@ -40,17 +40,20 @@ int HowMany2::objectCount = 0;
 
 // Pass and return BY VALUE:
 HowMany2 f(HowMany2 x) {
-  x.print("x argument inside f()");
+    x.print("x argument inside f()");
   out << "Returning from f()" << endl;
-  return x;
+  return x;//return from f()后析构x
 }
 
 int main() {
+  /*flow:
+
+  */
   HowMany2 h("h");
   out << "Entering f()" << endl;
-  HowMany2 h2 = f(h);
+  HowMany2 h2 = f(h);//进入后h2调用了copy-constructor,又在f(x)中使用一次copy-constructor
   h2.print("h2 after call to f()");
   out << "Call f(), no return value" << endl;
-  f(h);
+  f(h);//这里又调用两次copy-constructor
   out << "After call to f()" << endl;
 } ///:~
