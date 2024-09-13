@@ -21,7 +21,7 @@ int main()
         }
         int sz = st.size();
         bool flag = false;
-        for(set<int>::iterator it = st.begin(); it != st.end(); it++)
+        for(auto it = st.begin(); it != st.end(); it++)
         {
             set<int>::iterator it1 = it;
             for(set<int>::iterator it2 = ++it1; it2 != st.end(); it2++)
