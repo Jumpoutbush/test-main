@@ -5,7 +5,6 @@
 #include<chrono>
 #include<cstdlib>
 #include<ctime>
-#include<atomic>
  
 class Counter{
 public:
