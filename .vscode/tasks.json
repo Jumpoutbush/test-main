@@ -3,8 +3,9 @@
     "command": "g++",
     "args": [
         "-g",
-        //"${fileDirname}/fibonacci.cpp",
+        //"${fileDirname}/fibonacci.h",
         //"${fileDirname}/IntStack.cpp",
+        //"${fileDirname}\\*.cpp",
         "${file}",
         "-o",
         "${workspaceFolder}/exe/${fileBasenameNoExtension}.exe"

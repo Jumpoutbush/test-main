@@ -5,7 +5,7 @@
 // Copyright notice in Copyright.txt
 // Simple integer stack
 //{L} fibonacci
-#include "fibonacci.h"
+#include "./fibonacci.h"
 #include "../require.h"
 #include <iostream>
 using namespace std;
@@ -29,9 +29,10 @@ public:
 int main() {
   IntStack is;
   // Add some Fibonacci numbers, for interest:
-  for(int i = 0; i < 20; i++)
+  for(int i = 1; i <= 20; i++)
     is.push(fibonacci(i));
   // Pop & print them:
-  for(int k = 0; k < 20; k++)
+  for(int k = 1; k <= 20; k++)
     cout << is.pop() << endl;
+  system("pause");
 } ///:~
