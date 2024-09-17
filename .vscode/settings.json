@@ -145,6 +145,7 @@
     "stdfloat": "cpp",
     "stop_token": "cpp",
     "syncstream": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "hash_map": "cpp"
   }
 }
