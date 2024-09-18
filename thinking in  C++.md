@@ -3632,7 +3632,7 @@ nt main()
 
 ### std::mutex
 
-#### 1. lock()与unlock()
+#### 1.lock()unlock()
 
 |      | 方法       | 说明                                                         |
 | ---- | ---------- | ------------------------------------------------------------ |
@@ -3824,17 +3824,29 @@ void transferMoney(BankAccount& a, BankAccount& b, int money){
     }
 }
 /*
-    问题：找一个标识符,让两个lock根据情况先后执行，如果有多方是不是要2^n次else
-    解决方法：利用标准库接口  std::lock(a.Mutex, b.Mutex);//可以有若干多参数
+    问题:找一个标识符,让两个lock根据情况先后执行，如果有多方是不是要2^n次else
+    解决方法:利用标准库接口  std::lock(a.Mutex, b.Mutex);//可以有若干多参数
 */
 ```
 
 #### adopt_lock
 
 ```c++
-std::lock(a.Mutex, b.Mutex);//把mutexes全部锁住,才会往下走,否则等待
+std::lock(a.Mutex, b.Mutex);//把所有mutex全部锁住,才会往下走,否则等待
 //下面两步做解锁过程
 std::lock_guard<std::mutex> lockA(a.Mutex, std::adopt_lock);
 std::lock_guard<std::mutex> lockB(a.Mutex, std::adopt_lock);
+```
+
+## thread交互
+
+```c++
+//: B02:LearnThread2.cpp
+若worker中while(!ready)什么也不做,输出顺序会混乱;
+std::lock_guard<std::mutex> lock(mutex);//正常
+```
+
+```c++
+std::this_thread::yield()
 ```
 

@@ -4,18 +4,18 @@
 // (c) Bruce Eckel 2000
 // Copyright notice in Copyright.txt
 // A class that counts its objects
-#include <iostream>
+#include <fstream>
 #include <string>
 using namespace std;
-//ofstream out("HowMany.out");
+ofstream out("HowMany.out");
 
 class HowMany {
   static int objectCount;//在两次函数调用之间保留同一个objectCount
 public:
   HowMany() { objectCount++; }
   static void print(const string& msg = "") {
-    if(msg.size() != 0) cout << msg << ": ";
-    cout << "objectCount = "
+    if(msg.size() != 0) out << msg << ": ";
+    out << "objectCount = "
          << objectCount << endl;
   }
   ~HowMany() {
