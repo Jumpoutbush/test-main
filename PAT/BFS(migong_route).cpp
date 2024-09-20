@@ -42,7 +42,7 @@ void BFS()
         Q.pop();
         if(top.x == T.x && top.y == T.y)
         {
-             for(int i=0;i <= top.step;i++)
+            for(int i=0;i <= top.step;i++)
                 cout<<"("<<top.a[i]<<","<<top.b[i]<<")"<<endl;
             break;
         }

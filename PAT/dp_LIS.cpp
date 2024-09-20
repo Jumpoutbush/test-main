@@ -14,10 +14,12 @@ int main()
     for(int i = 1; i <= n; i++){
         dp[i] = 1;  //border
         for(int j = 1; j < i; j++){
-            if(A[i] >= A[j]){//compare with the formers
+            if(A[i] >= A[j]  && (dp[j] + 1 > dp[i])){//compare with the formers
                 dp[i] = dp[j] + 1;
             }
         }
         ans = max(ans, dp[i]);
     }
+    cout << ans << endl;
+    return 0;
 }
