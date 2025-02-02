@@ -3841,12 +3841,46 @@ std::lock_guard<std::mutex> lockB(a.Mutex, std::adopt_lock);
 ## thread交互
 
 ```c++
-//: B02:LearnThread2.cpp
+//: B02:ConditionaVariable.cpp
 若worker中while(!ready)什么也不做,输出顺序会混乱;
-std::lock_guard<std::mutex> lock(mutex);//正常
+std::lock_guard<std::mutex> lock(mutex);//简单上锁,正常输出
+而worke里使用printf(),由于它是线程安全的,也会正常输出;//可看作和cout的区别,它不是线程安全的
+
+```
+
+改造一下程序，在ready = true前面让线程休眠两分钟。即：条件不满足，程序一直在while里面死循环
+
+`this_thread::yield`相当于为忙等待提供了一个机会，可以主动让出线程的时间片，OS重新进行调度，但是下一个被调度进来的线程是哪个由OS来决定，有可能是别的线程，也有可能还是当前线程。
+
+```c++
+//把CPU让给其他程序
+std::this_thread::yield();
+1. 主动让出CPU,线程主动请求让出CPU时间片,而不是被OS强制调度;
+2. 时间不确定,yield()让出CPU的时间是实际根据调度策略和系统负载的;
+3. 不参与当前调度周期, 只能在下个调度周期里等待分配CPU时间片;
+4. 适用于忙等待状态:线程处于需要不断检查的(死)循环中,yield()可以避免无谓的CPU消耗,也就是上述程序所做的
 ```
 
 ```c++
-std::this_thread::yield()
+//方法2,worker也sleep_for一下,隔一段时间检查一次ready
+void worker(int i){
+    while(!ready){
+        //do nothing -> endless loop
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
 ```
+
+每个线程里执行多一些任务，相比之下线程之间调度和等待的时间比例就会降低
+
+#### 条件变量
+
+```c++
+//两个线程交替打印奇偶数
+std::condition_variable cv;
+std::unique_lock<std::mutex> lock(mtx);		//加锁,必须使用unique_lock保证后面能灵活开锁
+cv.wait(lock, []{return quit || !globalList.empty();});		//释放lock,等待后面条件达成
+```
+
+
 
