@@ -12,7 +12,7 @@ class ThreadPool{
 private:
     // 工作线程向量
     std::vector<std::thread> workers;
-    // 任务队列
+    // 任务队列 
     std::queue<Task> tasks;
     std::mutex queueMutex;
     std::condition_variable condition;
@@ -75,15 +75,19 @@ public:
 };
 
 int main() {
-    ThreadPool pool(4);
+    ThreadPool pool(3);
     auto task1 = []() {
         std::cout << "Task 1 is running" << std::endl;
     };
     auto task2 = []() {
         std::cout << "Task 2 is running" << std::endl;
     };
+    auto task4 = task1;
+    auto task5 = task2;
+
     pool.enqueue(task1);
     pool.enqueue(task2);
+
     system("pause");
     return 0;
 }

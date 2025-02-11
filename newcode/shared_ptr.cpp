@@ -16,7 +16,9 @@ private:
 public:
     SharedPtr():ptr(nullptr), refCount(nullptr){}
 
-    // 不希望出现 shared_ptr<int> sp = new int(200); 禁止类型转换
+    // 不希望出现 shared_ptr<int> sp = new int(200); 禁止隐式类型转换
+    // 只能通过 shared_ptr<int> sp = shared_ptr<int>(new int(200)); 显式类型转换
+    // 接受原始指针的构造函数
     explicit SharedPtr(T* p) : ptr(p), 
         refCount(p ? new std::atomic<std::size_t>(1) : nullptr){  // 堆上创建引用计数器
     }
@@ -84,44 +86,60 @@ public:
     T* operator->() const{
         return ptr;
     }
+
+    void reset(T* p = nullptr) noexcept {
+        release();
+        ptr = p;
+        refCount = new std::atomic<std::size_t>(1);
+    }
+
     int use_count() const{
         // return (refCount ? *refCount : 0);
         return refCount ? refCount->load(std::memory_order_acquire):0;
     }
 };
-class MyClass {
+
+class Test {
 public:
-    MyClass() { std::cout << "MyClass constructed.\n"; }
-    ~MyClass() { std::cout << "MyClass destroyed.\n"; }
-    void display() const { std::cout << "Hello from MyClass.\n"; }
+    Test(int val) : value(val) {
+        std::cout << "Test Constructor: " << value << std::endl;
+    }
+    ~Test() {
+        std::cout << "Test Destructor: " << value << std::endl;
+    }
+    void show() const {
+        std::cout << "Value: " << value << std::endl;
+    }
+private:
+    int value;
 };
 
-int main() {
-    // 创建 SharedPtr 并管理 MyClass 对象
-    SharedPtr<MyClass> ptr1(new MyClass());
+int main() 
+{
+    // SharedPtr<Test>* sp = new SharedPtr<Test>(new Test(10));
+    SharedPtr<Test> sp1(new Test(100));
+    std::cout << "sp1 use_count: " << sp1.use_count() << std::endl;
+    sp1->show();
 
-    // 使用智能指针访问对象
-    ptr1->display();
-    std::cout << "Reference count after ptr1 creation: " << ptr1.use_count() << "\n";
+    SharedPtr<Test> sp2 = sp1;
+    std::cout << "After sp2 = sp1:" << std::endl;
+    std::cout << "sp1 use_count: " << sp1.use_count() << std::endl;
+    std::cout << "sp2 use_count: " << sp2.use_count() << std::endl;
 
-    // 拷贝构造
-    SharedPtr<MyClass> ptr2 = ptr1;
-    std::cout << "Reference count after ptr2 copy construction: " << ptr1.use_count() << "\n";
+    SharedPtr<Test> sp3;
+    sp3 = sp2;
+    std::cout << "After sp3 = sp2:" << std::endl;
+    std::cout << "sp1 use_count: " << sp1.use_count() << std::endl;
+    std::cout << "sp2 use_count: " << sp2.use_count() << std::endl;
+    std::cout << "sp3 use_count: " << sp3.use_count() << std::endl;
 
-    // 拷贝赋值
-    SharedPtr<MyClass> ptr3;
-    ptr3 = ptr2;
-    std::cout << "Reference count after ptr3 copy assignment: " << ptr1.use_count() << "\n";
+    sp2.reset(new Test(200));
+    std::cout << "After sp2.reset(new Test(200)):" << std::endl;
+    std::cout << "sp1 use_count: " << sp1.use_count() << std::endl;
+    std::cout << "sp2 use_count: " << sp2.use_count() << std::endl;
+    std::cout << "sp3 use_count: " << sp3.use_count() << std::endl;
+    sp2->show();
 
-    // 移动构造
-    SharedPtr<MyClass> ptr4 = std::move(ptr3);
-    std::cout << "Reference count after ptr4 move construction: " << ptr4.use_count() << "\n";
-
-    // 移动赋值
-    SharedPtr<MyClass> ptr5;
-    ptr5 = std::move(ptr4);
-    std::cout << "Reference count after ptr5 move assignment: " << ptr5.use_count() << "\n";
-
-    // 退出作用域，自动销毁
+    std::cout << "Exiting main..." << std::endl;
     return 0;
 }

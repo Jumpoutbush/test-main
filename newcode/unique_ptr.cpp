@@ -1,97 +1,105 @@
 #include <iostream>
-#include <utility>
 
+// 空删除器
 template <typename T>
-class UniquePtr{
-private:
-    T* ptr;
-public:
-    explicit UniquePtr(T* p = nullptr) : ptr(p){}
-    //  explicit 关键字主要用于修饰构造函数或类型转换运算符，以防止 隐式转换 或 意外的类型转换。它是一种避免代码意外行为的防御性编程措施。
-
-    //  禁止拷贝构造函数和拷贝赋值运算符
-    UniquePtr(const UniquePtr&) = delete;
-    UniquePtr& operator=(const UniquePtr&) = delete;
-
-    // 移动构造函数
-    UniquePtr(UniquePtr&& other) noexcept : ptr(other.ptr){     // 必须确信函数内部不会抛出异常，noexcept只是编译时不增加异常处理从而提高效率，如若在noexcept的代码中调用了可能抛出异常的代码，将导致程序在运行时调用std::terminate()
-        other.ptr = nullptr;
+struct default_delete{
+    void operator()(T* ptr) const{
+        delete ptr;
     }
+};
+
+// 单对象的unique_ptr
+template <typename T, typename D = default_delete<T>>
+class unique_ptr{
+private:
+    T* ptr_;
+    D delete_;
     
-    //  移动赋值运算符
-    UniquePtr& operator=(UniquePtr&& other) noexcept {
+    // 释放所管理的资源并返回原始指针
+    void release() noexcept {
+        if(ptr_){
+            delete_(ptr_);
+        }
+    }
+public:
+    unique_ptr() noexcept : ptr_(nullptr){}
+
+    // 接受原始指针的构造函数
+    explicit unique_ptr(T* p) noexcept : ptr_(p){}
+
+    ~unique_ptr(){
+        release();
+    }
+    unique_ptr(const unique_ptr<T>&) = delete;
+    unique_ptr& operator=(const unique_ptr<T>&) = delete;
+
+    unique_ptr(unique_ptr<T>&& other) noexcept : ptr_(other.ptr_), delete_(std::move(other.delete_)){
+        other.ptr_ = nullptr;
+    }
+
+    unique_ptr& operator=(unique_ptr<T>&& other) noexcept {
         if(this != &other){
-            delete ptr;
-            ptr = other.ptr;
-            other.ptr = nullptr;
+            reset();
+            ptr_ = other.ptr_;
+            delete_ = std::move(other.delete_);
+            other.delete_ = nullptr;
         }
         return *this;
     }
 
-    ~UniquePtr(){
-        delete ptr;
+    bool operator!() const noexcept {
+        return !ptr_;
     }
 
-    // 获取原始指针
-    T* get() const {
-        return ptr;
+    T& operator*() const noexcept {
+        return *ptr_;
+    }
+    T* operator->() const noexcept {
+        return ptr_;
+    }
+    T* get() const noexcept {
+        return ptr_;
     }
 
-    // 释放控制权并返回原始指针
-    T* release() {
-        T* temp = ptr;
-        ptr = nullptr;
-        return temp;
-    }
-
-    // 重置指针，释放旧资源
-    void reset(T* p = nullptr) {
-        if (ptr != p) {
-            delete ptr; // 释放旧资源
-            ptr = p;    // 接管新资源
-        }
-    }
-
-    // 重载 `->` 操作符
-    T* operator->() const {
-        return ptr;
-    }
-
-    // 重载 `*` 操作符
-    T& operator*() const {
-        return *ptr;
-    }
-
-    // 检查是否为空
-    bool operator!() const {
-        return ptr == nullptr;
+    void reset(T* p = nullptr) noexcept {
+        release();
+        ptr_ = p;
     }
 };
-class MyClass {
+
+class Test{
 public:
-    MyClass() { std::cout << "MyClass constructed\n"; }
-    ~MyClass() { std::cout << "MyClass destroyed\n"; }
-    void display() { std::cout << "Hello from MyClass\n"; }
+    Test(int val) : value(val){
+        std::cout << "Test Constructor: " << value << std::endl;
+    }
+    ~Test(){
+        std::cout << "Test Destructor: " << value << std::endl;
+    }
+    void show() const {
+         std::cout << "Value: " << value << std::endl;
+    }
+private:
+    int value;
 };
 
-int main() {
-    UniquePtr<MyClass> ptr1(new MyClass()); // 创建 unique_ptr
-    ptr1->display();
+int main()
+{
+    unique_ptr<Test> ptr1(new Test(100));
+    ptr1->show();
 
-    // 转移所有权
-    UniquePtr<MyClass> ptr2 = std::move(ptr1);
+    unique_ptr<Test> ptr2(new Test(200));
+    ptr2->show();
+
+    unique_ptr<Test> ptr3 = std::move(ptr1);
     if (!ptr1) {
-        std::cout << "ptr1 is null after move\n";
+        std::cout << "ptr1 is now nullptr after move." << std::endl;
     }
-    ptr2->display();
+    ptr3->show();
 
-    // 重置资源
-    ptr2.reset(new MyClass());
-    ptr2->display();
+    // 重置 unique_ptr
+    ptr2.reset(new Test(300));
+    ptr2->show();
 
-    // 释放控制权
-    MyClass* rawPtr = ptr2.release();
-    delete rawPtr; // 需要手动删除
-
-    return 0; // 自动释放 ptr1 和 ptr2 的资源
+    // unique_ptr 自动释放资源
+    return 0;
 }
