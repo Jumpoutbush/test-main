@@ -1,34 +1,133 @@
-#include <memory>
-#include <mutex>
-#include <iostream>
-template <typename T>
-class Singleton {
-protected:
-    Singleton() = default;
-    Singleton(const Singleton<T>&) = delete;
-    Singleton& operator=(const Singleton<T>& st) = delete;
+#pragma once
 
-    static std::shared_ptr<T> _instance;
+#include <cstddef>
+#include <cstring>
+#include <algorithm>
+#include <stdexcept>
+
+class string{
 public:
-    static std::shared_ptr<T> GetInstance() {
-        static std::once_flag s_flag;
-        std::call_once(s_flag, [&](){
-            _instance = std::shared_ptr<T>(new T);
-        });
-        return _instance;
+    static const size_t s_min_capacity;
+private:
+    char* data_;
+    size_t size_;
+    size_t capacity_;
+
+    void realloc_data(size_t new_cap) {
+        new_cap = std::max(new_cap, s_min_capacity);
+        char* new_data = new char[new_cap + 1];
+        if(size_ > 0) {
+            std::memcpy(new_data, data_, size_);
+        }
+        new_data[size_] = '\0';     // last bit
+        delete[] data_;
+        data_ = new_data;
+        capacity_ = new_cap;
     }
-    void PrintAddress() {
-        std::cout << _instance.get() << std::endl;
+public:
+    string() : size_(0), capacity_(s_min_capacity) {
+        data_ = new char[capacity_ + 1];
+        data_[0] = '\0';
     }
-    ~Singleton(){
-        std::cout << "this is singleton destruct" << std::endl;
+
+    string(const char* str) {
+        if(!str){
+            throw std::invalid_argument("nullptr");
+        }
+        size_ = std::strlen(str);
+        capacity_ = std::max(size_, s_min_capacity);
+        data_ = new char[capacity_ + 1];
+        std::memcpy(data_, str, size_ + 1);
     }
+
+    string(const void* data, size_t len) {
+        if(!data) {
+            throw std::invalid_argument("nullptr");
+        }
+        size_ = len;
+        capacity_ = std::max(len, s_min_capacity);
+        data_ = new char[capacity_ + 1];
+        std::memcpy(data_, data, len);
+        data_[len] = '\0';
+    }
+
+    ~string() {
+        delete[] data_;
+    }
+    string(const string& other) : size_(other.size_), capacity_(other.capacity_) {
+        data_ = new char[capacity_ + 1];
+        std::memcpy(data_, other.data_, size_ + 1);
+
+    }
+    string(string&& other) noexcept :
+        data_(other.data_),
+        size_(other.size_),
+        capacity_(other.capacity_) {
+            other.data_ = nullptr;
+            other.size_ = 0;
+            other.capacity_ = 0;
+        }
+
+    string& operator = (const string& other) {
+        if(this != &other) {
+            char* new_data = new char[other.capacity_ + 1];
+            std::memcpy(new_data, other.data_, other.size_ + 1);
+            delete[] data_;
+            data_ = new_data;
+            size_ = other.size_;
+        }
+        return *this;
+    }
+
+    string& operator = (string&& other) noexcept {
+        if(this != &other) {
+            delete[] data_;
+            data_ = other.data_;
+            size_ = other.size_;
+            capacity_ = other.capacity_;
+            other.data_ = nullptr;
+            other.size_ = 0;
+            other.capacity_ = 0;
+        }
+        return *this;
+    }
+
+    void reserve(size_t new_cap) {
+        if(new_cap > capacity_) {
+            realloc_data(new_cap);
+        }
+    }
+
+    void shrink_to_fit() {
+        if(capacity_ > size_){
+            realloc_data(size_);
+        }
+    }
+
+    string& append(const char* str, size_t len) {
+        if(!str) throw std::invalid_argument("nullptr");
+        if(size_ + len > capacity_){
+            reserve((size_ + len) * 2);
+        }
+        std::memcpy(data_ + size_, str, len);
+        size_ += len;
+        data_[size_] = '\0';
+        return *this;
+    }
+    string& append(const char* str) {
+        if(!str) throw std::invalid_argument("nullptr");
+        return append(str, std::strlen(str));
+    }
+    string& operator += (const char* str) noexcept {
+        return append(str, std::strlen(str));
+    }
+
+    const char* c_str() const noexcept { return data_;}
+    const char* data() const noexcept { return data_;}
+    size_t size() const noexcept { return size_;}
+    size_t capacity() const noexcept { return capacity_;}
+    bool empty() const noexcept { return size_ == 0;}
 };
 
-/* 
-    类中的_instance声明仅仅是告诉编译器 _instance是static std::shared_ptr<T> 类型的成员变量
-    但并没有为其分配内存
-    所以，需要在类外部进行定义
-*/
-template <typename T>
-std::shared_ptr<T> Singleton<T>::_instance = nullptr;
+const size_t string::s_min_capacity = 15;
+

@@ -43,8 +43,8 @@ public:
             ptr = other.ptr;  
             refCount = other.refCount;
             if(refCount){
-                refCount->fetch_add(1);
-                }
+                refCount->fetch_add(1, std::memory_order_relaxed);
+            }
         }
         return *this;   // *this是指针解引用，代表当前对象本身而不是指针，类型是T&，即当前对象的引用
     }

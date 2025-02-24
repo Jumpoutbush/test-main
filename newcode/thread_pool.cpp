@@ -54,7 +54,8 @@ public:
 
     void workerThread()
     {
-        while(true){
+        while(true)
+        {
             Task task;
             {
                 std::unique_lock<std::mutex> lock(this->queueMutex);
