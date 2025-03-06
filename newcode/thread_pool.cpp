@@ -58,15 +58,20 @@ public:
         {
             Task task;
             {
+                // 创建互斥锁，用于保护任务队列
                 std::unique_lock<std::mutex> lock(this->queueMutex);
                 // 等待任务或停止信号
                 this->condition.wait(lock, [this]{
+                    // 如果停止信号为真，或者任务队列不为空，则返回true
                     return this->stop || !this->tasks.empty();
                 });
+                // 如果停止信号为真，并且任务队列为空，则返回
                 if(this->stop && this->tasks.empty()){
                     return;
                 }
+                // 从任务队列中取出第一个任务
                 task = std::move(this->tasks.front());
+                // 移除任务队列中的第一个任务
                 this->tasks.pop();
             }
             // 无需锁，因为只有任务队列需要线程安全

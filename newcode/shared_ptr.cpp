@@ -15,7 +15,6 @@ private:
     }
 public:
     SharedPtr():ptr(nullptr), refCount(nullptr){}
-
     // 不希望出现 shared_ptr<int> sp = new int(200); 禁止隐式类型转换
     // 只能通过 shared_ptr<int> sp = shared_ptr<int>(new int(200)); 显式类型转换
     // 接受原始指针的构造函数

@@ -19,7 +19,7 @@ int main()
             }
         }
     }
-    for(int L = 3; L < len; L++)//1,2已在上面判断过
+    for(int L = 3; L <= len; L++)//1,2已在上面判断过
     {
         for(int i = 0; L + i - 1 < len; i++)
         {
