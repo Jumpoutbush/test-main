@@ -20,7 +20,7 @@ void heapify(vector<int>& arr, int n, int i){
     }
 }
 
-// 建立好初始大顶堆智慧，将堆顶元素与最后一个元素对换
+// 建立好初始大顶堆，将堆顶元素与最后一个元素对换
 // 数组长度 - 1， 忽略已排好的最大值?
 // 调整为大顶堆
 void heapSort(vector<int>& arr){

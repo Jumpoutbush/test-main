@@ -4,7 +4,7 @@
 
 template<typename T>
 class Singleton {
-private:
+protected:
     Singleton() = default;
     Singleton(const Singleton<T>&) = delete;
     Singleton& operator = (const Singleton<T>&) = delete;
@@ -15,8 +15,9 @@ public:
     {
         static std::once_flag s_flag;
         std::call_once(s_flag, [&]{
-            return std::shared_ptr<T>(new Singleton());
+            _instance = std::make_shared<T>();
         });
+        return _instance;
     }
 
     void PrintAddress() 
@@ -32,3 +33,10 @@ public:
 
 template <typename T>
 std::shared_ptr<T> Singleton<T>::_instance = nullptr;
+
+class TestSingleton : public Singleton<TestSingleton> {
+public:
+    void print() {
+        std::cout << "TestSingleton instance address: " << this << std::endl;
+    }
+};

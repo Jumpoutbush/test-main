@@ -1,26 +1,31 @@
-#include <iostream>
+      #include <iostream>
 #include <algorithm>
+using namespace std;
 
-void partition(int arr[], int start, int end)
+int partition(int arr[], int start, int end)
 {
-    if(start >= end) return;
+    if(start >= end) return start;
+    int randomIndex = start + rand() % (end - start + 1);
+    std::swap(arr[start], arr[randomIndex]);
     int key = arr[start];
     int left = start, right = end;
-
     while(left < right){
-        while(left < right && arr[right] >= key) right --;
-        while(left < right && arr[left] <= key) left ++;
-        std::swap(arr[left], arr[right]);
+        while(left < right && arr[right] >= key) right--;
+        while(left < right && arr[left] <= key) left++;
+        swap(arr[left], arr[right]);
     }
     if(arr[left] < key){
-        std::swap(arr[left], arr[start]);
+        swap(arr[left], arr[start]);
     }
-    partition(arr, start, left - 1);
-    partition(arr, left + 1, end);
+    return left;
 }
-void quick_sort(int arr[], int len)
+void quick_sort(int arr[], int start, int end)
 {
-    partition(arr, 0, len - 1);
+    if(start < end){
+        int pivotIndex = partition(arr, start, end);
+        quick_sort(arr, start, pivotIndex - 1);
+        quick_sort(arr, pivotIndex + 1, end);
+    }
 }
 
 int main() {
@@ -30,7 +35,7 @@ int main() {
     int len = sizeof(arr) / sizeof(arr[0]);
 
     // 调用快速排序函数对数组进行排序
-    quick_sort(arr, len);
+    quick_sort(arr, 0, len - 1);
 
     // 输出排序后的数组元素
     for (int i = 0; i < len; ++i) {

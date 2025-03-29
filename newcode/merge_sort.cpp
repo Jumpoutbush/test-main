@@ -68,3 +68,15 @@ std::vector<int> sortArray(std::vector<int>& nums) {
     mergeSort(nums, 0, n - 1);
     return nums;
 }
+
+
+int main()
+{
+    std::vector<int> nums = {5, 2, 3, 1, 4, 6, 9, 8, 7};
+    std::vector<int> sorted = sortArray(nums);
+    for(int i = 0; i < sorted.size(); ++i){
+        std::cout << sorted[i] << " ";
+    }
+    std::cout << std::endl;
+    return 0;
+}

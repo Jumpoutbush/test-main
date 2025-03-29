@@ -1,5 +1,6 @@
 #include <iostream>
 #include <atomic>
+#include <memory>
 
 template <typename T>
 class SharedPtr{
@@ -21,6 +22,7 @@ public:
     explicit SharedPtr(T* p) : ptr(p), 
         refCount(p ? new std::atomic<std::size_t>(1) : nullptr){  // 堆上创建引用计数器
     }
+
 
     ~SharedPtr(){
         release();
@@ -94,11 +96,11 @@ public:
 
     int use_count() const{
         // return (refCount ? *refCount : 0);
-        return refCount ? refCount->load(std::memory_order_acquire):0;
+        return refCount ? refCount->load(std::memory_order_acquire) : 0;
     }
 };
 
-class Test {
+class Test : public std::enable_shared_from_this<Test> {
 public:
     Test(int val) : value(val) {
         std::cout << "Test Constructor: " << value << std::endl;
@@ -113,10 +115,16 @@ private:
     int value;
 };
 
+
+
 int main() 
 {
     // SharedPtr<Test>* sp = new SharedPtr<Test>(new Test(10));
-    SharedPtr<Test> sp1(new Test(100));
+    std::shared_ptr<Test> sp = std::make_shared<Test>(10);
+    std::cout << "sp use_count: " << sp.use_count() << std::endl;
+    sp->show();
+
+    SharedPtr<Test> sp1(std::move(new Test(10)));
     std::cout << "sp1 use_count: " << sp1.use_count() << std::endl;
     sp1->show();
 
@@ -140,5 +148,6 @@ int main()
     sp2->show();
 
     std::cout << "Exiting main..." << std::endl;
+    getchar();
     return 0;
 }

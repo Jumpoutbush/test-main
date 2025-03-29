@@ -30,7 +30,7 @@ public:
         data_[0] = '\0';
     }
 
-    // 支持C风格字符串构造寒素，遇到'\0'会自动截断字符串
+    // 支持C风格字符串构造函数，遇到'\0'会自动截断字符串
     string(const char* str)
     {
         if(!str){
@@ -101,8 +101,6 @@ public:
         return *this;
     }
 
-
-    
     // 预分配内存
     void reserve(size_t new_cap) {
         if(new_cap > capacity_) {
