@@ -1,104 +1,97 @@
-#include <vector>
-#include <queue>
-#include <memory>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
+#include <chrono>
 #include <functional>
 #include <iostream>
+#include <mutex>
+#include <thread>
+#include <ctime>
+#include <vector>
+#include <queue>
 
-// 定义任务类型为无返回值的函数对象
-using Task = std::function<void()>;
-// 线程池类
-class ThreadPool{
+
+using Task = std::function<void(int a)>;
+
+class threadpool{
 private:
-    // 工作线程向量
     std::vector<std::thread> workers;
-    // 任务队列 
     std::queue<Task> tasks;
-    std::mutex queueMutex; // 用于保护任务队列的互斥锁
-    std::condition_variable condition; // 用于线程同步的条件变量
-    bool stop; // 标记线程池是否停止
-public:
+    std::mutex queueMutex;
+    std::condition_variable condition;
+    bool stop;
 
-    // 构造函数，初始化线程池并创建指定数量的工作线程
-    explicit ThreadPool(size_t numThreads) : stop(false) 
+public:
+    explicit threadpool(size_t numThreads) : stop(false)
     {
-        for(size_t i = 0; i < numThreads; ++i){
+        for(size_t i = 0; i < numThreads; i++){
             workers.emplace_back([this]{
-                this->workerThread();
+                this->workthread();
             });
         }
     }
 
-
-    // 析构函数，停止线程池并等待所有工作线程结束
-    ~ThreadPool()
+    ~threadpool()
     {
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             stop = true;
         }
-        // 通知所有线程要结束
         condition.notify_all();
-        for (std::thread& worker : workers) {
-            // 阻塞线程等待执行完
+        for(std::thread& worker : workers){
             worker.join();
         }
     }
 
-    void enqueue(const Task& task)
-    {
+    void enqueue(const Task& task){
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             if(stop){
-                std::__throw_runtime_error("enqueue on stopped ThreadPool");
+                std::__throw_runtime_error("enqueue on stopping");
             }
-            tasks.push(task);
+            this->tasks.emplace(task);
         }
-        condition.notify_one();     // 通知消费者消费
+        condition.notify_one();
     }
 
-    void workerThread()
-    {
+    void workthread(){
         while(true)
         {
             Task task;
             {
-                // 创建互斥锁，用于保护任务队列
                 std::unique_lock<std::mutex> lock(this->queueMutex);
-                // 等待任务或停止信号
-                this->condition.wait(lock, [this]{
-                    // 如果停止信号为真，或者任务队列不为空，则返回true
-                    return this->stop || !this->tasks.empty();  // false: 继续等待，true: 继续执行
-                });
-                // 如果停止信号为真，并且任务队列为空，则返回
+                // 等待信号量成立
+                // this->condition.wait(lock, [this]{
+                //     return this->stop || !this->tasks.empty();
+                // });
+                while(!this->stop && this->tasks.empty()){
+                    this->condition.wait(lock);
+                }
                 if(this->stop && this->tasks.empty()){
                     return;
                 }
-                // 从任务队列中取出第一个任务
-                task = std::move(this->tasks.front());
-                // 移除任务队列中的第一个任务
+
+                task = this->tasks.front();
                 this->tasks.pop();
             }
-            // 无需锁，因为只有任务队列需要线程安全
-            task();
+            task(10);
         }
     }
 };
 
-int main() {
+int main()
+{ 
     {
-        ThreadPool pool(3);
-        auto task1 = []() {
-            std::cout << "Task 1 is running" << std::endl;
+        std::mutex mtx;
+        threadpool pool(3);
+        auto task1 = [&mtx](int a){
+            std::lock_guard<std::mutex> lk(mtx);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::cout << "task1 " << a << std::endl;
         };
-        auto task2 = []() {
-            std::cout << "Task 2 is running" << std::endl;
+        auto task2 = [&mtx](int a){
+            std::lock_guard<std::mutex> lk(mtx);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::cout << "task2 " << a << std::endl;
         };
-        auto task4 = task1;
-        auto task5 = task2;
-
         pool.enqueue(task1);
         pool.enqueue(task2);
     }

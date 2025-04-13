@@ -10,47 +10,43 @@ struct TreeNode{
     TreeNode(int a) : val(a), left(nullptr), right(nullptr){}
 };
 
-void insert(TreeNode* &root, int x)
-{
+void insert(TreeNode* &root, int x){
     if(root == nullptr){
         root = new TreeNode(x);
         return;
     }
-    if(x == root->val){
+    if(root->val == x){
         return;
-    } else if(x > root->val){
-        insert(root->right, x);
-    } else {
+    }else if(root->val > x){
         insert(root->left, x);
+    }else{
+        insert(root->right, x);
     }
 }
 
-TreeNode* CreateTree(std::vector<int> v)
-{
+TreeNode* createTree(std::vector<int>& v){
     TreeNode* root = nullptr;
-    for(int i = 0; i < v.size(); i++)
-    {
+    for(int i = 0; i < v.size(); i++){
         insert(root, v[i]);
     }
     return root;
 }
 
-void midOrder(TreeNode* root){
-    if(root == nullptr)
-        return;
-    midOrder(root->left);
-    v.push_back(root->val);
-    midOrder(root->right);
-}
 bool isValidBST(TreeNode* root) {
-    // write code here
-    midOrder(root);
-    for(int i = 1; i < v.size() - 1; i++)
-    {
-        if(v[i] < v[i - 1] || v[i] > v[i + 1])
-            flag = false;
+    bool isvalid;
+    if(!root) return true;
+    if(root->left == nullptr && root->right == nullptr){
+        isvalid = true;
+    }else if(root->left != nullptr && root->right == nullptr){
+        isvalid = root->left->val < root->val;
+    }else if(root->left == nullptr && root->right != nullptr){
+        isvalid = root->right->val > root->val;
+    }else{
+        isvalid = root->left->val < root->val && root->right->val > root->val;
     }
-    return flag;
+    bool lvalid = isValidBST(root->left);
+    bool rvalid = isValidBST(root->right);
+    return isvalid && lvalid && rvalid;
 }
 std::queue<TreeNode*> q;
 void levelOrder(TreeNode* root){
@@ -73,14 +69,8 @@ void levelOrder(TreeNode* root){
 }
 int main()
 {
-    std::vector<int> v_init;
-    v_init.push_back(4);
-    v_init.push_back(3);
-    v_init.push_back(6);
-    v_init.push_back(9);
-    v_init.push_back(8);
-    v_init.push_back(7);
-    TreeNode* tree1 = CreateTree(v_init);
+    std::vector<int> v_init = {4, 3, 6, 9, 8, 7};
+    TreeNode* tree1 = createTree(v_init);
     levelOrder(tree1);
     if(isValidBST(tree1)){
         std::cout << "true" << std::endl;

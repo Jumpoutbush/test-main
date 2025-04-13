@@ -1,31 +1,39 @@
 #include <iostream>
 #include <windows.h>
 
-// 全局钩子句柄
 HHOOK hHook = NULL;
 
-// 键盘钩子回调函数
+// Define a callback function for the low-level keyboard hook
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    // Check if the hook procedure must process the message
     if (nCode >= 0) {
-        // wParam 表示按键消息类型，如 WM_KEYDOWN 或 WM_KEYUP
+        // Check if the message is a key press event
         if (wParam == WM_KEYDOWN) {
-            // lParam 包含了按键的详细信息
+            
+            // Cast the lParam to a pointer to KBDLLHOOKSTRUCT to access the key information
             KBDLLHOOKSTRUCT* pKeyboardHook = (KBDLLHOOKSTRUCT*)lParam;
-            std::cout << "按键被按下，键码: " << pKeyboardHook->vkCode << std::endl;
+            // Output the virtual key code of the pressed key to the console
+            std::cout << "Key down: " << pKeyboardHook->vkCode << std::endl;
         }
     }
-    // 调用下一个钩子
+    
+    // Pass the hook information to the next hook procedure in the current hook chain
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
-// 安装键盘钩子
+// Function to install a low-level keyboard hook
 BOOL InstallKeyboardHook() {
-    // WH_KEYBOARD_LL 表示低级键盘钩子
+
+    // SetWindowsHookEx function is used to install a hook
+    // WH_KEYBOARD_LL parameter specifies a low-level keyboard input event hook
+    // KeyboardProc is the pointer to the hook procedure
+    // NULL specifies that the hook procedure is in the same address space as the calling thread
+    // 0 specifies that the hook is associated with the current thread
     hHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
+    // Return TRUE if the hook was successfully installed, otherwise FALSE
     return hHook != NULL;
 }
 
-// 卸载键盘钩子
 BOOL UninstallKeyboardHook() {
     if (hHook != NULL) {
         return UnhookWindowsHookEx(hHook);
@@ -35,20 +43,18 @@ BOOL UninstallKeyboardHook() {
 
 int main() {
     if (InstallKeyboardHook()) {
-        std::cout << "键盘钩子已安装" << std::endl;
+        std::cout << "install keyboard hook success" << std::endl;
 
-        // 创建消息循环
+
         MSG msg;
         while (GetMessage(&msg, NULL, 0, 0) > 0) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
-        // 卸载键盘钩子
         UninstallKeyboardHook();
-        std::cout << "键盘钩子已卸载" << std::endl;
+        std::cout << "uninstall keyboard hook success" << std::endl;
     } else {
-        std::cerr << "无法安装键盘钩子" << std::endl;
+        std::cerr << "error installing keyboard hook" << std::endl;
     }
 
     return 0;

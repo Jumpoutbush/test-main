@@ -5,28 +5,28 @@
 template <typename T, typename U>
 class Pair {
 public:
-T first;
-U second;
+    T first;
+    U second;
 
-Pair(T a, U b) : first(a), second(b) {}
+    Pair(T a, U b) : first(a), second(b) {}
 
-void print() const {
-    std::cout << "Pair: " << first << ", " << second << std::endl;
-}
+    void print() const {
+        std::cout << "Pair: " << first << ", " << second << std::endl;
+    }
 };
 
 // 类模板偏特化：当第二个类型是指针时
 template <typename T, typename U>
 class Pair<T, U*> {
 public:
-T first;
-U* second;
+    T first;
+    U* second;
 
-Pair(T a, U* b) : first(a), second(b) {}
+    Pair(T a, U* b) : first(a), second(b) {}
 
-void print() const {
-    std::cout << "Pair with pointer: " << first << ", " << *second << std::endl;
-}
+    void print() const {
+        std::cout << "Pair with pointer: " << first << ", " << *second << std::endl;
+    }
 };
 
 template <typename T, typename U>

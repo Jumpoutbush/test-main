@@ -1,92 +1,88 @@
+#include <algorithm>
 #include <iostream>
 #include <vector>
+#include <memory>
+using namespace std;
 
-template<typename T>
-class PriorityQueue {
+// 大根堆
+template <typename T>
+class priority_queue : public enable_shared_from_this<priority_queue<T>>{
 private:
-    std::vector<T> heap;
-
-    // 上浮操作，用于维护堆的性质
-    void swim(int k) {
-        while (k > 0 && heap[(k - 1) / 2] < heap[k]) {
-            std::swap(heap[(k - 1) / 2], heap[k]);
-            k = (k - 1) / 2;
-        }
-    }
-
-    // 下沉操作，用于维护堆的性质
-    void sink(int k) {
-        int n = heap.size();
-        while (2 * k + 1 < n) {
-            int j = 2 * k + 1;
-            if (j + 1 < n && heap[j] < heap[j + 1]) {
-                j++;
-            }
-            if (heap[k] >= heap[j]) {
+    vector<T> data;
+    void siftUp(int index){
+        while(index > 0){
+            int parent = (index - 1) / 2;
+            if(data[parent] >= data[index]){
                 break;
             }
-            std::swap(heap[k], heap[j]);
-            k = j;
+            swap(data[parent], data[index]);
+            index = parent;
         }
     }
 
+    void siftDown(int index){
+        int largest = index;
+        int left = largest * 2 + 1;
+        int right = largest * 2 + 2;
+
+        if(left < data.size() && data[left] > data[largest]){
+            largest = left;
+        }
+        if(right < data.size() && data[right] > data[largest]){
+            largest = right;
+        }
+        if(largest != index){
+            swap(data[largest], data[index]);
+            siftDown(largest);
+        }
+    }
 public:
-    // 向优先级队列中插入元素
-    void push(const T& value) {
-        heap.push_back(value);
-        swim(heap.size() - 1);
+    void push(const T& value){
+        data.push_back(value);
+        siftUp(data.size() - 1);
     }
-
-    // 移除并返回优先级最高的元素
-    T pop() {
-        if (heap.empty()) {
-            throw std::out_of_range("Priority queue is empty");
+    void pop(){
+        if(data.empty()){
+            return;
         }
-        T max = heap[0];
-        std::swap(heap[0], heap[heap.size() - 1]);
-        heap.pop_back();
-        sink(0);
-        return max;
+        swap(data[0], data.back());
+        data.pop_back();
+        siftDown(0);
     }
-
-    // 返回优先级最高的元素
     T top() const {
-        if (heap.empty()) {
+        if (data.empty()) {
             throw std::out_of_range("Priority queue is empty");
         }
-        return heap[0];
+        return data[0];
     }
 
-    // 检查优先级队列是否为空
     bool empty() const {
-        return heap.empty();
+        return data.empty();
     }
 
-    // 返回优先级队列中元素的数量
     size_t size() const {
-        return heap.size();
+        return data.size();
+    }
+
+    void print(){
+        for(auto& i : data){
+            cout << i << " ";
+        }
+        cout << endl;
     }
 };
 
 int main() {
-    PriorityQueue<int> pq;
-
-    // 插入元素
-    pq.push(3);
-    pq.push(1);
-    pq.push(2);
-
-    // 输出队列中的元素数量
-    std::cout << "Size: " << pq.size() << std::endl;
-
-    // 输出优先级最高的元素
-    std::cout << "Top: " << pq.top() << std::endl;
-
-    // 移除优先级最高的元素
-    pq.pop();
-
-    // 再次输出优先级最高的元素
-    std::cout << "Top after pop: " << pq.top() << std::endl;
-
+    shared_ptr<priority_queue<int>> pq = make_shared<priority_queue<int>>();
+    cout << pq.use_count() << endl;
+    pq->push(3);
+    pq->push(1);
+    pq->push(4);
+    pq->print();
+    pq->push(1);
+    pq->push(5);
+    pq->push(9);
+    pq->print();
+    system("pause");
     return 0;
 }    
