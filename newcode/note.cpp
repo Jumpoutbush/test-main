@@ -1,71 +1,129 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <climits>
-#include <cmath>
-#include <string>
+#include <cassert>
+using namespace std;
+struct DLinkedNode{
+    int key, value;
+    DLinkedNode* next;
+    DLinkedNode* prev;
+    DLinkedNode():key(0), value(0), next(nullptr), prev(nullptr){}
+    DLinkedNode(int key_, int value_):key(key_), value(value_), next(nullptr), prev(nullptr){}
+};
 
-/**
- * 计算经过必过点的最短路径长度
- * 
- * @param graph 表示图的字符串
- * @param mustPass 表示必过点的字符串
- * @return 最短路径长度
- */
-int calculateMinDistance(const std::string& graph, const std::string& mustPass) {
-    // 边界情况检查
-    if (graph.empty() || mustPass.empty()) {
-        return 0;  // 如果图或必过点为空，则无需移动
+class LRUCache{
+private:
+    int capacity;
+    int size;
+    DLinkedNode* head;
+    DLinkedNode* tail;
+    unordered_map<int, DLinkedNode*> cache;
+
+    void removeNode(DLinkedNode* node){
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
     }
-    
-    if (mustPass.length() == 1) {
-        return 0;  // 如果只有一个必过点，则无需移动
+
+    void addToHead(DLinkedNode* node){
+        node->next = head->next;
+        node->prev = head;
+        head->next->prev = node;
+        head->next = node;
     }
-    
-    // 记录每个字符在图中的所有出现位置
-    std::unordered_map<char, std::vector<int>> charPositions;
-    for (int i = 0; i < graph.length(); i++) {
-        char c = graph[i];
-        charPositions[c].push_back(i);
+    DLinkedNode* removeTail(){
+        auto node = tail->prev;
+        removeNode(node);
+        return node;
     }
-    
-    // 检查所有必过点是否在图中
-    for (char c : mustPass) {
-        if (charPositions.find(c) == charPositions.end()) {
-            return -1;  // 必过点不在图中，无法通过
+    void moveToHead(DLinkedNode* node){
+        removeNode(node);
+        addToHead(node);
+    }
+public:
+    LRUCache(int capacity){
+        this->capacity = capacity;
+        size = 0;
+        head = new DLinkedNode();
+        tail = new DLinkedNode();
+        head->next = tail;
+        tail->prev = head;
+    }
+    ~LRUCache(){
+        DLinkedNode* cur = head;
+        while(cur){
+            DLinkedNode* nextnode = cur->next;
+            delete cur;
+            cur = nextnode;
         }
     }
-    
-    // 计算最短路径
-    int totalDistance = 0;
-    for (int i = 0; i < mustPass.length() - 1; i++) {
-        char current = mustPass[i];
-        char next = mustPass[i + 1];
-        
-        // 计算从当前字符到下一个字符的最短距离
-        int minDistanceBetween = INT_MAX;
-        for (int pos1 : charPositions[current]) {
-            for (int pos2 : charPositions[next]) {
-                int distance = std::abs(pos2 - pos1);
-                minDistanceBetween = std::min(minDistanceBetween, distance);
+    int get(int key){
+        if(cache.find(key) == cache.end()){
+            return -1;
+        }
+        DLinkedNode* cur = cache[key];
+        moveToHead(cur);
+        return cur->value;
+    }
+    void put(int key, int value){
+        if(cache.find(key) != cache.end()){
+            auto cur = cache[key];
+            cur->value = value;
+            moveToHead(cur);
+        }else{
+            DLinkedNode* node = new DLinkedNode(key, value);
+            cache[key] = node;
+            addToHead(node);
+            size ++;
+            if(size > capacity){
+                DLinkedNode* del = removeTail();
+                cache.erase(del->key);
+                delete del;
+                size --;
             }
         }
-        
-        totalDistance += minDistanceBetween;
     }
-    
-    return totalDistance;
+};
+
+// 测试函数
+std::vector<int> testLRUCache(const std::vector<std::string>& operations, const std::vector<std::vector<int>>& params) {
+    std::vector<int> results;
+    LRUCache* cache = nullptr;
+
+    for (size_t i = 0; i < operations.size(); ++i) {
+        if (operations[i] == "LRUCache") {
+            cache = new LRUCache(params[i][0]);
+            results.push_back(-2); // 用 -2 表示创建操作，在输出中可忽略
+        } else if (operations[i] == "put") {
+            cache->put(params[i][0], params[i][1]);
+            results.push_back(-2); // 用 -2 表示 put 操作，在输出中可忽略
+        } else if (operations[i] == "get") {
+            int result = cache->get(params[i][0]);
+            results.push_back(result);
+        }
+    }
+
+    delete cache;
+    return results;
 }
 
 int main() {
-    // 读取输入
-    std::string graph, mustPass;
-    std::getline(std::cin, graph);
-    std::getline(std::cin, mustPass);
-    
-    // 计算最短路径长度
-    int minDistance = calculateMinDistance(graph, mustPass);
-    std::cout << minDistance << std::endl;
+    std::vector<std::string> operations = {"LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"};
+    std::vector<std::vector<int>> params = {{2}, {1, 1}, {2, 2}, {1}, {3, 3}, {2}, {4, 4}, {1}, {3}, {4}};
+
+    std::vector<int> results = testLRUCache(operations, params);
+
+    std::cout << "[";
+    for (size_t i = 0; i < results.size(); ++i) {
+        if (i > 0) {
+            std::cout << ", ";
+        }
+        if (results[i] == -2) {
+            std::cout << "null";
+        } else {
+            std::cout << results[i];
+        }
+    }
+    std::cout << "]" << std::endl;
     system("pause");
     return 0;
 }

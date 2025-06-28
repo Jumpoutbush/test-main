@@ -1,6 +1,7 @@
-#include "note.h"
+#include "Singleton.h"
 
 int main() {
+    TestSingleton::Init();
     // 获取单例实例
     std::shared_ptr<TestSingleton> instance1 = TestSingleton::GetInstance();
     std::shared_ptr<TestSingleton> instance2 = TestSingleton::GetInstance();

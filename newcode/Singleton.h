@@ -34,9 +34,15 @@ public:
 template <typename T>
 std::shared_ptr<T> Singleton<T>::_instance = nullptr;
 
-class TestSingleton : public Singleton<TestSingleton> {
+class TestSingleton : public Singleton<TestSingleton>,
+    public std::enable_shared_from_this<TestSingleton>
+{ 
+    friend class Singleton<TestSingleton>;
 public:
     void print() {
         std::cout << "TestSingleton instance address: " << this << std::endl;
+    }
+    static void Init(){
+        std::cout << "TestSingleton init" << std::endl;
     }
 };
